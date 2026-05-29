@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/Images">
+        <file>resources/Heimdall_Bg.jpg</file>
+    </qresource>
+</RCC>
