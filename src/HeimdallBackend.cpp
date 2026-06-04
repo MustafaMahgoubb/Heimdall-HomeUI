@@ -3,12 +3,22 @@
 #include <cstdlib>
 #include <thread>
 #include <chrono>
+#include <fstream>
 
 using namespace v1::Heimdall;
 
 HeimdallBackend::HeimdallBackend(QObject *parent)
-    : QObject(parent), m_versionNumber("unknown"), m_updateStatus("checking..."), m_running(true)
+    : QObject(parent), m_updateStatus("checking..."), m_running(true)
 {
+    std::ifstream vfile("/etc/heimdall_version.txt");
+    std::string ver;
+    if (vfile.is_open() && std::getline(vfile, ver)) {
+        m_versionNumber = QString::fromStdString(ver);
+        vfile.close();
+    } else {
+        m_versionNumber = "v1.0.0";
+    }
+
     m_proxyThread = std::thread(&HeimdallBackend::initProxy, this);
 }
 
@@ -102,15 +112,14 @@ void HeimdallBackend::onBroadcastReceived(const std::string& version, const std:
     std::cout << "[Backend] Broadcast received: new version " << version << std::endl;
     
     QMetaObject::invokeMethod(this, [this, version]() {
-        m_versionNumber = QString::fromStdString(version);
         m_updateStatus = "Update Available";
-        emit versionChanged();
         emit updateStatusChanged();
+        emit updateCheckFinished(true, true, QString::fromStdString(version));
     }, Qt::QueuedConnection);
 
-    // Launch flash script in background
-    std::string cmd = "/usr/bin/flash_update.sh " + version + " &";
-    system(cmd.c_str());
+    // Launch flash script in background is now disabled for UI control
+    // std::string cmd = "/usr/bin/flash_update.sh " + version + " &";
+    // system(cmd.c_str());
 }
 
 void HeimdallBackend::checkForUpdates()
@@ -120,8 +129,12 @@ void HeimdallBackend::checkForUpdates()
         std::string v, i, c;
         m_proxy->CheckForUpdates("RPi3", callStatus, v, i, c);
         if (callStatus == CommonAPI::CallStatus::SUCCESS) {
-            m_versionNumber = QString::fromStdString(v);
-            emit versionChanged();
+            bool isNew = (!v.empty() && v != m_versionNumber.toStdString());
+            emit updateCheckFinished(true, isNew, QString::fromStdString(v));
+        } else {
+            emit updateCheckFinished(false, false, "");
         }
+    } else {
+        emit updateCheckFinished(false, false, "");
     }
 }

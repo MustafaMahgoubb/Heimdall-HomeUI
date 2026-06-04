@@ -21,6 +21,132 @@ Window {
     signal goToAsgardClicked()
     // ==========================================
 
+    Connections {
+        target: heimdall
+        function onUpdateCheckFinished(success, isNewUpdate, latestVersion) {
+            if (!success) {
+                connectionFailedDialog.open()
+            } else if (!isNewUpdate) {
+                upToDateDialog.open()
+            } else {
+                newUpdateDialog.latestVersion = latestVersion
+                newUpdateDialog.open()
+            }
+        }
+    }
+
+    // ----------------------------------------------------
+    // DIALOGS
+    // ----------------------------------------------------
+    Popup {
+        id: connectionFailedDialog
+        width: 400; height: 200
+        x: Math.round((parent.width - width) / 2)
+        y: Math.round((parent.height - height) / 2)
+        modal: true; focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        background: Rectangle {
+            color: "#1e1e1e"; radius: 12
+            border.color: "#ff4444"; border.width: 2
+        }
+        ColumnLayout {
+            anchors.fill: parent; anchors.margins: 20; spacing: 20
+            Text {
+                text: "Connection Failed"
+                font.pixelSize: 24; font.bold: true; color: "#ff4444"
+                Layout.alignment: Qt.AlignHCenter
+            }
+            Text {
+                text: "Could not connect to the QNX update server."
+                font.pixelSize: 18; color: "white"
+                wrapMode: Text.WordWrap; Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+            }
+            Button {
+                text: "Close"
+                Layout.alignment: Qt.AlignHCenter; Layout.preferredWidth: 120
+                onClicked: connectionFailedDialog.close()
+            }
+        }
+    }
+
+    Popup {
+        id: upToDateDialog
+        width: 400; height: 200
+        x: Math.round((parent.width - width) / 2)
+        y: Math.round((parent.height - height) / 2)
+        modal: true; focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        background: Rectangle {
+            color: "#1e1e1e"; radius: 12
+            border.color: "#4caf50"; border.width: 2
+        }
+        ColumnLayout {
+            anchors.fill: parent; anchors.margins: 20; spacing: 20
+            Text {
+                text: "System Up to Date"
+                font.pixelSize: 24; font.bold: true; color: "#4caf50"
+                Layout.alignment: Qt.AlignHCenter
+            }
+            Text {
+                text: "Your system is already running the latest version."
+                font.pixelSize: 18; color: "white"
+                wrapMode: Text.WordWrap; Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+            }
+            Button {
+                text: "Close"
+                Layout.alignment: Qt.AlignHCenter; Layout.preferredWidth: 120
+                onClicked: upToDateDialog.close()
+            }
+        }
+    }
+
+    Popup {
+        id: newUpdateDialog
+        property string latestVersion: ""
+        width: 450; height: 220
+        x: Math.round((parent.width - width) / 2)
+        y: Math.round((parent.height - height) / 2)
+        modal: true; focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        background: Rectangle {
+            color: "#1e1e1e"; radius: 12
+            border.color: "#d4af37"; border.width: 2
+        }
+        ColumnLayout {
+            anchors.fill: parent; anchors.margins: 20; spacing: 20
+            Text {
+                text: "New Update Available!"
+                font.pixelSize: 24; font.bold: true; color: "#d4af37"
+                Layout.alignment: Qt.AlignHCenter
+            }
+            Text {
+                text: "Version " + newUpdateDialog.latestVersion + " is available for download."
+                font.pixelSize: 18; color: "white"
+                wrapMode: Text.WordWrap; Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+            }
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 30
+                Button {
+                    text: "Download"
+                    Layout.preferredWidth: 140
+                    onClicked: {
+                        newUpdateDialog.close()
+                        // TODO: trigger download Part 3/4
+                    }
+                }
+                Button {
+                    text: "Later"
+                    Layout.preferredWidth: 140
+                    onClicked: newUpdateDialog.close()
+                }
+            }
+        }
+    }
+
     StackView {
         id: stackView
         anchors.fill: parent

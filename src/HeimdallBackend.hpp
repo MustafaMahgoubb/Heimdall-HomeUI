@@ -25,6 +25,7 @@ signals:
     void versionChanged();
     void updateStatusChanged();
     void newUpdateAvailable(const QString& version, const QString& url, const QString& checksum);
+    void updateCheckFinished(bool success, bool isNewUpdate, const QString& latestVersion);
 
 private:
     void initProxy();

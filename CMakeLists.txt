@@ -75,3 +75,7 @@ install(TARGETS appHomeLauncher Heimdall-HomeUI-someip
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+install(FILES config/heimdall_version.txt
+    DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}
+)
