@@ -11,7 +11,7 @@ find_package(Qt6 REQUIRED COMPONENTS Quick)
 option(USE_INSTALLED_COMMONAPI "Use installed CommonAPI" ON)
 find_package(CommonAPI 3.2.4 REQUIRED CONFIG)
 find_package(CommonAPI-SomeIP 3.2.4 REQUIRED)
-find_package(vsomeip3 3.7.3 REQUIRED)
+find_package(vsomeip3 3.7.2 REQUIRED)
 
 qt_standard_project_setup(REQUIRES 6.8)
 
