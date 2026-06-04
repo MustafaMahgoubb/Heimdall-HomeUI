@@ -70,7 +70,7 @@ add_library(Heimdall-HomeUI-someip SHARED ${PRJ_SOMEIP_LIB_SRCS})
 target_link_libraries(Heimdall-HomeUI-someip CommonAPI-SomeIP)
 
 include(GNUInstallDirs)
-install(TARGETS appHomeLauncher
+install(TARGETS appHomeLauncher Heimdall-HomeUI-someip
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

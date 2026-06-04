@@ -40,6 +40,15 @@ void HeimdallBackend::initProxy()
     
     m_proxy = runtime->buildProxy<OTASystemManagementProxy>(domain, instance);
 
+    if (!m_proxy) {
+        std::cerr << "[Backend] Error: Failed to build CommonAPI proxy! (Check if libHeimdall-HomeUI-someip.so is loaded)" << std::endl;
+        QMetaObject::invokeMethod(this, [this]() {
+            m_updateStatus = "Error: Proxy Build Failed";
+            emit updateStatusChanged();
+        }, Qt::QueuedConnection);
+        return;
+    }
+
     std::cout << "[Backend] Checking service availability..." << std::endl;
     while (!m_proxy->isAvailable() && m_running) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
