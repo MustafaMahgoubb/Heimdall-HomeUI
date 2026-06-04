@@ -1,0 +1,8 @@
+{
+    "Heimdall.OTASystemManagement" : {
+        "service_id": 4660,
+        "instances" : {
+            "Heimdall.OTASystemManagement": 1
+        }
+    }
+}

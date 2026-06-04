@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/Images">
         <file>resources/Heimdall_Bg.jpg</file>
+        <file>resources/asgard.jpg</file>
+        <file>resources/Midgard.jpg</file>
     </qresource>
 </RCC>

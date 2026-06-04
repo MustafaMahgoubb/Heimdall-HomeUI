@@ -1,0 +1,25 @@
+{
+    "unicast" : "10.0.0.2",
+    "logging" :
+    { 
+        "level" : "debug",
+        "console" : "true",
+        "file" : { "enable" : "false" },
+        "dlt" : "false"
+    },
+    "applications" :
+    [
+        {
+            "name" : "HeimdallUI",
+            "id" : "0x4444"
+        }
+    ],
+    "routing" : "HeimdallUI",
+    "service-discovery" :
+    {
+        "enable" : "true",
+        "multicast" : "224.244.224.245",
+        "port" : "30491",
+        "protocol" : "udp"
+    }
+}
