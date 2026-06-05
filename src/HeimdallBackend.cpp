@@ -162,7 +162,9 @@ void HeimdallBackend::applyUpdate()
 {
     if (m_proxy && m_proxy->isAvailable()) {
         CommonAPI::CallStatus callStatus;
-        std::string v = m_proxy->getLatestVersionAttribute();
+        CommonAPI::CallStatus cs;
+        std::string v;
+        m_proxy->getLatestVersionAttribute().getValue(cs, v);
         std::string cmd = "/usr/bin/flash_update.sh " + v + " &";
         system(cmd.c_str());
         m_updateStatus = "Applying Update...";
