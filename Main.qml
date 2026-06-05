@@ -33,6 +33,9 @@ Window {
                 newUpdateDialog.open()
             }
         }
+        function onDownloadComplete() {
+            applyUpdateDialog.open()
+        }
     }
 
     // ----------------------------------------------------
@@ -135,13 +138,57 @@ Window {
                     Layout.preferredWidth: 140
                     onClicked: {
                         newUpdateDialog.close()
-                        // TODO: trigger download Part 3/4
+                        heimdall.requestDownload()
                     }
                 }
                 Button {
                     text: "Later"
                     Layout.preferredWidth: 140
                     onClicked: newUpdateDialog.close()
+                }
+            }
+        }
+    }
+
+    Popup {
+        id: applyUpdateDialog
+        width: 450; height: 220
+        x: Math.round((parent.width - width) / 2)
+        y: Math.round((parent.height - height) / 2)
+        modal: true; focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        background: Rectangle {
+            color: "#1e1e1e"; radius: 12
+            border.color: "#4caf50"; border.width: 2
+        }
+        ColumnLayout {
+            anchors.fill: parent; anchors.margins: 20; spacing: 20
+            Text {
+                text: "Download Complete!"
+                font.pixelSize: 24; font.bold: true; color: "#4caf50"
+                Layout.alignment: Qt.AlignHCenter
+            }
+            Text {
+                text: "The update has been downloaded. Do you want to apply it now?"
+                font.pixelSize: 18; color: "white"
+                wrapMode: Text.WordWrap; Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+            }
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 30
+                Button {
+                    text: "Apply"
+                    Layout.preferredWidth: 140
+                    onClicked: {
+                        applyUpdateDialog.close()
+                        heimdall.applyUpdate()
+                    }
+                }
+                Button {
+                    text: "Later"
+                    Layout.preferredWidth: 140
+                    onClicked: applyUpdateDialog.close()
                 }
             }
         }

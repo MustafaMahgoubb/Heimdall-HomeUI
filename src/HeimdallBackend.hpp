@@ -20,12 +20,15 @@ public:
     QString updateStatus() const;
 
     Q_INVOKABLE void checkForUpdates();
+    Q_INVOKABLE void requestDownload();
+    Q_INVOKABLE void applyUpdate();
 
 signals:
     void versionChanged();
     void updateStatusChanged();
     void newUpdateAvailable(const QString& version, const QString& url, const QString& checksum);
     void updateCheckFinished(bool success, bool isNewUpdate, const QString& latestVersion);
+    void downloadComplete();
 
 private:
     void initProxy();

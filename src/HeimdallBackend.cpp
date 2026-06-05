@@ -87,11 +87,21 @@ void HeimdallBackend::initProxy()
     m_proxy->getCurrentStateAttribute().getChangedEvent().subscribe([this](const OTASystemManagement::UpdateState& state) {
         QMetaObject::invokeMethod(this, [this, state]() {
             if (state == OTASystemManagement::UpdateState::UPDATE_AVAILABLE) {
-                m_updateStatus = "Update Available";
+                if (m_updateStatus == "Downloading...") {
+                    m_updateStatus = "Download Complete";
+                    emit updateStatusChanged();
+                    emit downloadComplete();
+                } else {
+                    m_updateStatus = "Update Available";
+                    emit updateStatusChanged();
+                }
             } else if (state == OTASystemManagement::UpdateState::DOWNLOADING) {
                 m_updateStatus = "Downloading...";
+                emit updateStatusChanged();
+            } else if (state == OTASystemManagement::UpdateState::ERROR) {
+                m_updateStatus = "Error";
+                emit updateStatusChanged();
             }
-            emit updateStatusChanged();
         }, Qt::QueuedConnection);
     });
 
@@ -136,5 +146,26 @@ void HeimdallBackend::checkForUpdates()
         }
     } else {
         emit updateCheckFinished(false, false, "");
+    }
+}
+
+void HeimdallBackend::requestDownload()
+{
+    if (m_proxy && m_proxy->isAvailable()) {
+        CommonAPI::CallStatus callStatus;
+        bool ack;
+        m_proxy->ReportState(OTASystemManagement::UpdateState::DOWNLOADING, "RPi3", callStatus, ack);
+    }
+}
+
+void HeimdallBackend::applyUpdate()
+{
+    if (m_proxy && m_proxy->isAvailable()) {
+        CommonAPI::CallStatus callStatus;
+        std::string v = m_proxy->getLatestVersionAttribute();
+        std::string cmd = "/usr/bin/flash_update.sh " + v + " &";
+        system(cmd.c_str());
+        m_updateStatus = "Applying Update...";
+        emit updateStatusChanged();
     }
 }
