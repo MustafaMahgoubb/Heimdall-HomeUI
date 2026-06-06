@@ -26,8 +26,6 @@
             "service": "0x1234",
             "instance": "0x0001",
             "unicast": "10.0.0.1",
-            "major": 1,
-            "minor": 0,
             "unreliable": 30509,
             "eventgroups": [
                 {
