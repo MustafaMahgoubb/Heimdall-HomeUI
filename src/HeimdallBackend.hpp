@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QString>
 #include <QThread>
+#include <QTimer>
 #include <CommonAPI/CommonAPI.hpp>
 #include <v1/Heimdall/OTASystemManagementProxy.hpp>
 
@@ -38,7 +39,11 @@ private:
     QString m_updateStatus;
     std::shared_ptr<v1::Heimdall::OTASystemManagementProxy<>> m_proxy;
     std::thread m_proxyThread;
+    QTimer* m_pollTimer;
     bool m_running;
+    
+private slots:
+    void pollServer();
 };
 
 #endif

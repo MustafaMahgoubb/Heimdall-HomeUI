@@ -10,6 +10,9 @@ using namespace v1::Heimdall;
 HeimdallBackend::HeimdallBackend(QObject *parent)
     : QObject(parent), m_updateStatus("checking..."), m_running(true)
 {
+    m_pollTimer = new QTimer(this);
+    connect(m_pollTimer, &QTimer::timeout, this, &HeimdallBackend::pollServer);
+    m_pollTimer->start(3000);
     std::ifstream vfile("/etc/heimdall_version.txt");
     std::string ver;
     if (vfile.is_open() && std::getline(vfile, ver)) {
@@ -73,37 +76,8 @@ void HeimdallBackend::initProxy()
         emit updateStatusChanged();
     }, Qt::QueuedConnection);
 
-    m_proxy->getNewUpdateAvailableEvent().subscribe([this](const std::string& version, const std::string& url, const std::string& checksum) {
-        this->onBroadcastReceived(version, url, checksum);
-    });
-    
-    m_proxy->getLatestVersionAttribute().getChangedEvent().subscribe([this](const std::string& val) {
-        QMetaObject::invokeMethod(this, [this, val]() {
-            m_versionNumber = QString::fromStdString(val);
-            emit versionChanged();
-        }, Qt::QueuedConnection);
-    });
-    
-    m_proxy->getCurrentStateAttribute().getChangedEvent().subscribe([this](const OTASystemManagement::UpdateState& state) {
-        QMetaObject::invokeMethod(this, [this, state]() {
-            if (state == OTASystemManagement::UpdateState::UPDATE_AVAILABLE) {
-                if (m_updateStatus == "Downloading...") {
-                    m_updateStatus = "Download Complete";
-                    emit updateStatusChanged();
-                    emit downloadComplete();
-                } else {
-                    m_updateStatus = "Update Available";
-                    emit updateStatusChanged();
-                }
-            } else if (state == OTASystemManagement::UpdateState::DOWNLOADING) {
-                m_updateStatus = "Downloading...";
-                emit updateStatusChanged();
-            } else if (state == OTASystemManagement::UpdateState::ERROR) {
-                m_updateStatus = "Error";
-                emit updateStatusChanged();
-            }
-        }, Qt::QueuedConnection);
-    });
+    // Event subscriptions removed due to Service Discovery hardware constraints
+    // UI state is now polled via pollServer() QTimer
 
     // Do initial query
     CommonAPI::CallStatus callStatus;
@@ -121,15 +95,51 @@ void HeimdallBackend::onBroadcastReceived(const std::string& version, const std:
 {
     std::cout << "[Backend] Broadcast received: new version " << version << std::endl;
     
-    QMetaObject::invokeMethod(this, [this, version]() {
-        m_updateStatus = "Update Available";
-        emit updateStatusChanged();
-        emit updateCheckFinished(true, true, QString::fromStdString(version));
-    }, Qt::QueuedConnection);
+    m_updateStatus = "Update Available";
+    emit updateStatusChanged();
+    emit updateCheckFinished(true, true, QString::fromStdString(version));
+}
 
-    // Launch flash script in background is now disabled for UI control
-    // std::string cmd = "/usr/bin/flash_update.sh " + version + " &";
-    // system(cmd.c_str());
+void HeimdallBackend::pollServer()
+{
+    if (m_proxy && m_proxy->isAvailable()) {
+        CommonAPI::CallStatus cs;
+        std::string val;
+        m_proxy->getLatestVersionAttribute().getValue(cs, val);
+        if (cs == CommonAPI::CallStatus::SUCCESS) {
+            QString newVal = QString::fromStdString(val);
+            if (m_versionNumber != newVal) {
+                m_versionNumber = newVal;
+                emit versionChanged();
+            }
+        }
+        
+        CommonAPI::CallStatus csState;
+        OTASystemManagement::UpdateState state;
+        m_proxy->getCurrentStateAttribute().getValue(csState, state);
+        if (csState == CommonAPI::CallStatus::SUCCESS) {
+            if (state == OTASystemManagement::UpdateState::UPDATE_AVAILABLE) {
+                if (m_updateStatus == "Downloading...") {
+                    m_updateStatus = "Download Complete";
+                    emit updateStatusChanged();
+                    emit downloadComplete();
+                } else if (m_updateStatus != "Update Available" && m_updateStatus != "Download Complete") {
+                    m_updateStatus = "Update Available";
+                    emit updateStatusChanged();
+                }
+            } else if (state == OTASystemManagement::UpdateState::DOWNLOADING) {
+                if (m_updateStatus != "Downloading...") {
+                    m_updateStatus = "Downloading...";
+                    emit updateStatusChanged();
+                }
+            } else if (state == OTASystemManagement::UpdateState::ERROR) {
+                if (m_updateStatus != "Error") {
+                    m_updateStatus = "Error";
+                    emit updateStatusChanged();
+                }
+            }
+        }
+    }
 }
 
 void HeimdallBackend::checkForUpdates()

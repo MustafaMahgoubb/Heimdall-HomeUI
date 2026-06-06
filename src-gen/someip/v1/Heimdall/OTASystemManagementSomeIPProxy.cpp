@@ -33,7 +33,7 @@ std::shared_ptr<CommonAPI::SomeIP::Proxy> createOTASystemManagementSomeIPProxy(
 void initializeOTASystemManagementSomeIPProxy() {
     CommonAPI::SomeIP::AddressTranslator::get()->insert(
         "local:Heimdall.OTASystemManagement:v1_0:Heimdall.OTASystemManagement",
-        0x1234, 0x1, 0, 0);
+        0x1234, 0x1, 1, 0);
     CommonAPI::SomeIP::Factory::get()->registerProxyCreateMethod(
         "Heimdall.OTASystemManagement:v1_0",
         &createOTASystemManagementSomeIPProxy);
