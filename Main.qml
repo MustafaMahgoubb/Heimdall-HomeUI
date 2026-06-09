@@ -19,6 +19,7 @@ Window {
     signal checkForUpdatesClicked()
     signal goToMidgardClicked()
     signal goToAsgardClicked()
+    signal goToJotunheimClicked()
     // ==========================================
 
     Connections {
@@ -283,6 +284,32 @@ Window {
                     }
 
                     Button {
+                        text: "Go to Jotunheim"
+                        Layout.preferredHeight: 50
+                        Layout.preferredWidth: 320
+                        
+                        background: Rectangle {
+                            color: parent.pressed ? "#b8860b" : (parent.hovered ? "#daa520" : "#2a2a2a")
+                            radius: 8
+                            border.color: "#d4af37"
+                            border.width: 1
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
+                        contentItem: Text {
+                            text: parent.text
+                            font.pixelSize: 24
+                            font.bold: true
+                            color: "white"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        onClicked: {
+                            root.goToJotunheimClicked()
+                            stackView.push(jotunheimPage)
+                        }
+                    }
+
+                    Button {
                         text: "Check For Updates"
                         Layout.preferredHeight: 50
                         Layout.preferredWidth: 320
@@ -465,6 +492,68 @@ Window {
                 Text {
                     id: title2
                     text: "Welcome to Asgard"
+                    anchors.centerIn: parent
+                    font.pixelSize: 42
+                    font.bold: true
+                    color: "white"
+                }
+            }
+
+            Button {
+                text: "Back to Home UI"
+                anchors.bottom: parent.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottomMargin: 60
+                width: 320
+                height: 50
+                
+                background: Rectangle {
+                    color: parent.pressed ? "#b8860b" : (parent.hovered ? "#daa520" : "#2a2a2a")
+                    radius: 8
+                    border.color: "#d4af37"
+                    border.width: 1
+                    Behavior on color { ColorAnimation { duration: 150 } }
+                }
+                contentItem: Text {
+                    text: parent.text
+                    font.pixelSize: 24
+                    font.bold: true
+                    color: "white"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                onClicked: {
+                    stackView.pop()
+                }
+            }
+        }
+    }
+
+    // ----------------------------------------------------
+    // JOTUNHEIM PAGE
+    // ----------------------------------------------------
+    Component {
+        id: jotunheimPage
+        Item {
+            Image {
+                anchors.fill: parent
+                source: "qrc:/Images/resources/jotunheim.jpg"
+                fillMode: Image.PreserveAspectCrop
+                opacity: 0.8
+            }
+
+            Rectangle {
+                anchors.top: parent.top
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.topMargin: 60
+                color: "#aa000000"
+                radius: 15
+                width: title3.width + 60
+                height: title3.height + 20
+
+                Text {
+                    id: title3
+                    text: "Welcome to Jotunheim"
                     anchors.centerIn: parent
                     font.pixelSize: 42
                     font.bold: true

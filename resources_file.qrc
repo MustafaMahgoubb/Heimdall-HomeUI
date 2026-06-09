@@ -3,5 +3,6 @@
         <file>resources/Heimdall_Bg.jpg</file>
         <file>resources/asgard.jpg</file>
         <file>resources/Midgard.jpg</file>
+        <file>resources/jotunheim.jpg</file>
     </qresource>
 </RCC>
