@@ -1,5 +1,7 @@
 #!/bin/bash
 
+exec > /tmp/flash_update.log 2>&1
+
 # flash_update.sh
 # Usage: ./flash_update.sh <version> <filename> [QNX_IP]
 
@@ -33,7 +35,13 @@ echo "Flashing to inactive partition $INACTIVE_PART"
 
 # Note: In a real system, you'd use ssh keys to avoid password prompts
 echo "Copying $FILENAME from QNX and flashing to /dev/$INACTIVE_PART..."
-ssh root@$QNX_IP "cat /tmp/$FILENAME" | dd of=/dev/$INACTIVE_PART bs=4M status=progress
+
+# If using OpenSSH and sshpass is installed:
+# sshpass -p "root" ssh -o StrictHostKeyChecking=no root@$QNX_IP "cat /tmp/$FILENAME" | dd of=/dev/$INACTIVE_PART bs=4M
+
+# If using Dropbear SSH, we can use DROPBEAR_PASSWORD and the -y flag to bypass prompts:
+export DROPBEAR_PASSWORD="root"
+ssh -y root@$QNX_IP "cat /tmp/$FILENAME" | dd of=/dev/$INACTIVE_PART bs=4M
 
 if [ $? -eq 0 ]; then
     echo "Flash successful."

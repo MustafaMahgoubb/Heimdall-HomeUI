@@ -111,8 +111,10 @@ void HeimdallBackend::initProxy()
     if (callStatus == CommonAPI::CallStatus::SUCCESS) {
         QMetaObject::invokeMethod(this, [this, v]() {
             if (!v.empty()) {
-                m_versionNumber = QString::fromStdString(v);
-                emit versionChanged();
+                // Do not overwrite local version, but signal the new version is available
+                // m_versionNumber = QString::fromStdString(v); 
+                // emit versionChanged();
+                emit updateCheckFinished(true, true, QString::fromStdString(v));
             }
         }, Qt::QueuedConnection);
     }
@@ -123,10 +125,8 @@ void HeimdallBackend::onBroadcastReceived(const std::string& version, const std:
     std::cout << "[Backend] Broadcast received: new version " << version << std::endl;
     
     QMetaObject::invokeMethod(this, [this, version]() {
-        if (m_versionNumber.toStdString() != version) {
-            m_versionNumber = QString::fromStdString(version);
-            emit versionChanged();
-        }
+        // We do not overwrite the local m_versionNumber here.
+        // We only notify the UI that a new update is available.
         m_updateStatus = "Update Available";
         emit updateStatusChanged();
         emit updateCheckFinished(true, true, QString::fromStdString(version));
@@ -164,17 +164,31 @@ void HeimdallBackend::requestDownload()
 void HeimdallBackend::applyUpdate()
 {
     if (m_proxy && m_proxy->isAvailable()) {
-        CommonAPI::CallStatus cs;
+        CommonAPI::CallStatus cs1, cs2;
         std::string v, url;
-        m_proxy->getLatestVersionAttribute().getValue(cs, v);
-        m_proxy->getImageURLAttribute().getValue(cs, url);
+        m_proxy->getLatestVersionAttribute().getValue(cs1, v);
+        m_proxy->getImageURLAttribute().getValue(cs2, url);
         
-        std::string filename = url.substr(url.find_last_of('/') + 1);
-        if (filename.empty()) filename = "rootfs.ext3";
+        if (cs1 == CommonAPI::CallStatus::SUCCESS && cs2 == CommonAPI::CallStatus::SUCCESS) {
+            std::string filename = url.substr(url.find_last_of('/') + 1);
+            if (filename.empty() || filename == url) filename = "rootfs.ext3";
 
-        std::string cmd = "/usr/bin/flash_update.sh " + v + " " + filename + " &";
-        system(cmd.c_str());
-        m_updateStatus = "Applying Update...";
-        emit updateStatusChanged();
+            // If testing locally, try to use the local script first
+            std::string scriptPath = "/usr/bin/flash_update.sh";
+            std::ifstream f("flash_update.sh");
+            if (f.good()) {
+                scriptPath = "./flash_update.sh";
+            }
+
+            std::string cmd = scriptPath + " " + v + " " + filename + " &";
+            std::cout << "[Backend] Applying update with command: " << cmd << std::endl;
+            int ret = system(cmd.c_str());
+            std::cout << "[Backend] Command returned: " << ret << std::endl;
+            
+            m_updateStatus = "Applying Update...";
+            emit updateStatusChanged();
+        } else {
+            std::cerr << "[Backend] ERROR: Could not read attributes to apply update!" << std::endl;
+        }
     }
 }
