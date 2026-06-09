@@ -1,17 +1,18 @@
 #!/bin/bash
 
 # flash_update.sh
-# Usage: ./flash_update.sh <version> [QNX_IP]
+# Usage: ./flash_update.sh <version> <filename> [QNX_IP]
 
 VERSION=$1
-QNX_IP=${2:-10.0.0.1}
+FILENAME=$2
+QNX_IP=${3:-10.0.0.1}
 
-if [ -z "$VERSION" ]; then
-    echo "Usage: $0 <version> [QNX_IP]"
+if [ -z "$VERSION" ] || [ -z "$FILENAME" ]; then
+    echo "Usage: $0 <version> <filename> [QNX_IP]"
     exit 1
 fi
 
-echo "Starting flash update for version $VERSION from QNX gateway at $QNX_IP"
+echo "Starting flash update for version $VERSION ($FILENAME) from QNX gateway at $QNX_IP"
 
 # Determine active partition
 CMDLINE=$(cat /proc/cmdline)
@@ -31,8 +32,8 @@ echo "Active partition is $ACTIVE_PART"
 echo "Flashing to inactive partition $INACTIVE_PART"
 
 # Note: In a real system, you'd use ssh keys to avoid password prompts
-echo "Copying rootfs from QNX and flashing to /dev/$INACTIVE_PART..."
-ssh root@$QNX_IP "cat /tmp/rootfs.ext3" | dd of=/dev/$INACTIVE_PART bs=4M status=progress
+echo "Copying $FILENAME from QNX and flashing to /dev/$INACTIVE_PART..."
+ssh root@$QNX_IP "cat /tmp/$FILENAME" | dd of=/dev/$INACTIVE_PART bs=4M status=progress
 
 if [ $? -eq 0 ]; then
     echo "Flash successful."

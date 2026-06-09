@@ -10,9 +10,6 @@ using namespace v1::Heimdall;
 HeimdallBackend::HeimdallBackend(QObject *parent)
     : QObject(parent), m_updateStatus("checking..."), m_running(true)
 {
-    m_pollTimer = new QTimer(this);
-    connect(m_pollTimer, &QTimer::timeout, this, &HeimdallBackend::pollServer);
-    m_pollTimer->start(3000);
     std::ifstream vfile("/etc/heimdall_version.txt");
     std::string ver;
     if (vfile.is_open() && std::getline(vfile, ver)) {
@@ -76,48 +73,14 @@ void HeimdallBackend::initProxy()
         emit updateStatusChanged();
     }, Qt::QueuedConnection);
 
-    // Event subscriptions removed due to Service Discovery hardware constraints
-    // UI state is now polled via pollServer() QTimer
+    // Subscribe to new update broadcasts
+    m_proxy->getNewUpdateAvailableEvent().subscribe([this](const std::string& v, const std::string& u, const std::string& c) {
+        this->onBroadcastReceived(v, u, c);
+    });
 
-    // Do initial query
-    CommonAPI::CallStatus callStatus;
-    std::string v, i, c;
-    m_proxy->CheckForUpdates("RPi3", callStatus, v, i, c);
-    if (callStatus == CommonAPI::CallStatus::SUCCESS) {
-        QMetaObject::invokeMethod(this, [this, v]() {
-            m_versionNumber = QString::fromStdString(v);
-            emit versionChanged();
-        }, Qt::QueuedConnection);
-    }
-}
-
-void HeimdallBackend::onBroadcastReceived(const std::string& version, const std::string& url, const std::string& checksum)
-{
-    std::cout << "[Backend] Broadcast received: new version " << version << std::endl;
-    
-    m_updateStatus = "Update Available";
-    emit updateStatusChanged();
-    emit updateCheckFinished(true, true, QString::fromStdString(version));
-}
-
-void HeimdallBackend::pollServer()
-{
-    if (m_proxy && m_proxy->isAvailable()) {
-        CommonAPI::CallStatus cs;
-        std::string val;
-        m_proxy->getLatestVersionAttribute().getValue(cs, val);
-        if (cs == CommonAPI::CallStatus::SUCCESS) {
-            QString newVal = QString::fromStdString(val);
-            if (m_versionNumber != newVal) {
-                m_versionNumber = newVal;
-                emit versionChanged();
-            }
-        }
-        
-        CommonAPI::CallStatus csState;
-        OTASystemManagement::UpdateState state;
-        m_proxy->getCurrentStateAttribute().getValue(csState, state);
-        if (csState == CommonAPI::CallStatus::SUCCESS) {
+    // Subscribe to state changes
+    m_proxy->getCurrentStateAttribute().getChangedEvent().subscribe([this](const OTASystemManagement::UpdateState& state) {
+        QMetaObject::invokeMethod(this, [this, state]() {
             if (state == OTASystemManagement::UpdateState::UPDATE_AVAILABLE) {
                 if (m_updateStatus == "Downloading...") {
                     m_updateStatus = "Download Complete";
@@ -138,9 +101,39 @@ void HeimdallBackend::pollServer()
                     emit updateStatusChanged();
                 }
             }
-        }
+        }, Qt::QueuedConnection);
+    });
+
+    // Do initial query
+    CommonAPI::CallStatus callStatus;
+    std::string v, i, c;
+    m_proxy->CheckForUpdates("RPi3", callStatus, v, i, c);
+    if (callStatus == CommonAPI::CallStatus::SUCCESS) {
+        QMetaObject::invokeMethod(this, [this, v]() {
+            if (!v.empty()) {
+                m_versionNumber = QString::fromStdString(v);
+                emit versionChanged();
+            }
+        }, Qt::QueuedConnection);
     }
 }
+
+void HeimdallBackend::onBroadcastReceived(const std::string& version, const std::string& url, const std::string& checksum)
+{
+    std::cout << "[Backend] Broadcast received: new version " << version << std::endl;
+    
+    QMetaObject::invokeMethod(this, [this, version]() {
+        if (m_versionNumber.toStdString() != version) {
+            m_versionNumber = QString::fromStdString(version);
+            emit versionChanged();
+        }
+        m_updateStatus = "Update Available";
+        emit updateStatusChanged();
+        emit updateCheckFinished(true, true, QString::fromStdString(version));
+    }, Qt::QueuedConnection);
+}
+
+
 
 void HeimdallBackend::checkForUpdates()
 {
@@ -171,11 +164,15 @@ void HeimdallBackend::requestDownload()
 void HeimdallBackend::applyUpdate()
 {
     if (m_proxy && m_proxy->isAvailable()) {
-        CommonAPI::CallStatus callStatus;
         CommonAPI::CallStatus cs;
-        std::string v;
+        std::string v, url;
         m_proxy->getLatestVersionAttribute().getValue(cs, v);
-        std::string cmd = "/usr/bin/flash_update.sh " + v + " &";
+        m_proxy->getImageURLAttribute().getValue(cs, url);
+        
+        std::string filename = url.substr(url.find_last_of('/') + 1);
+        if (filename.empty()) filename = "rootfs.ext3";
+
+        std::string cmd = "/usr/bin/flash_update.sh " + v + " " + filename + " &";
         system(cmd.c_str());
         m_updateStatus = "Applying Update...";
         emit updateStatusChanged();
