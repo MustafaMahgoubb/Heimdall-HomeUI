@@ -224,7 +224,7 @@ std::future<CommonAPI::CallStatus> OTASystemManagementSomeIPProxy::ReportStateAs
 }
 
 void OTASystemManagementSomeIPProxy::getOwnVersion(uint16_t& ownVersionMajor, uint16_t& ownVersionMinor) const {
-    ownVersionMajor = 0;
+    ownVersionMajor = 1;
     ownVersionMinor = 0;
 }
 

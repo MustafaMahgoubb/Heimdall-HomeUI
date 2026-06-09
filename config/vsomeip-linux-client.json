@@ -10,36 +10,11 @@
             "id": "0x4444"
         }
     ],
-    "clients": [
-        {
-            "service": "0x1234",
-            "instance": "0x0001",
-            "unreliable": [ 30509 ]
-        }
-    ],
     "routing": "HeimdallUI",
     "service-discovery": {
-        "enable": false
-    },
-    "services": [
-        {
-            "service": "0x1234",
-            "instance": "0x0001",
-            "unicast": "10.0.0.1",
-            "unreliable": 30509,
-            "eventgroups": [
-                {
-                    "eventgroup": "0x0001",
-                    "events": [
-                        { "event": "0x8001" },
-                        { "event": "0x8010" },
-                        { "event": "0x8021" },
-                        { "event": "0x8031" },
-                        { "event": "0x8041" }
-                    ],
-                    "is_subscribed": "true"
-                }
-            ]
-        }
-    ]
+        "enable": "true",
+        "multicast": "224.224.224.245",
+        "port": "30490",
+        "protocol": "udp"
+    }
 }
