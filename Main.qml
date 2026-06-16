@@ -283,6 +283,7 @@ Window {
                         }
                     }
 
+                    /*
                     Button {
                         text: "Go to Jotunheim"
                         Layout.preferredHeight: 50
@@ -308,6 +309,7 @@ Window {
                             stackView.push(jotunheimPage)
                         }
                     }
+                    */
 
                     Button {
                         text: "Check For Updates"

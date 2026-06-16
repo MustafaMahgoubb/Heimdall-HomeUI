@@ -55,7 +55,7 @@ if [ $? -eq 0 ]; then
         # Reboot the system to apply
         echo "Rebooting in 5 seconds..."
         sleep 5
-        # reboot
+        reboot
     else
         echo "Warning: /boot/cmdline.txt not found. Cannot switch boot partition automatically."
     fi

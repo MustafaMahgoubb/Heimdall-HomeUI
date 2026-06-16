@@ -111,10 +111,15 @@ void HeimdallBackend::initProxy()
     if (callStatus == CommonAPI::CallStatus::SUCCESS) {
         QMetaObject::invokeMethod(this, [this, v]() {
             if (!v.empty()) {
-                // Do not overwrite local version, but signal the new version is available
-                // m_versionNumber = QString::fromStdString(v); 
-                // emit versionChanged();
-                emit updateCheckFinished(true, true, QString::fromStdString(v));
+                bool isNew = (v != m_versionNumber.toStdString());
+                if (isNew) {
+                    m_updateStatus = "Update Available";
+                    emit updateStatusChanged();
+                } else {
+                    m_updateStatus = "up-to-date";
+                    emit updateStatusChanged();
+                }
+                emit updateCheckFinished(true, isNew, QString::fromStdString(v));
             }
         }, Qt::QueuedConnection);
     }
@@ -125,11 +130,12 @@ void HeimdallBackend::onBroadcastReceived(const std::string& version, const std:
     std::cout << "[Backend] Broadcast received: new version " << version << std::endl;
     
     QMetaObject::invokeMethod(this, [this, version]() {
-        // We do not overwrite the local m_versionNumber here.
-        // We only notify the UI that a new update is available.
-        m_updateStatus = "Update Available";
-        emit updateStatusChanged();
-        emit updateCheckFinished(true, true, QString::fromStdString(version));
+        bool isNew = (version != m_versionNumber.toStdString());
+        if (isNew) {
+            m_updateStatus = "Update Available";
+            emit updateStatusChanged();
+        }
+        emit updateCheckFinished(true, isNew, QString::fromStdString(version));
     }, Qt::QueuedConnection);
 }
 
